@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dein emotionaler Adventskalender</title>
+<meta name="description" content="24 Tage, 24 Herzensbotschaften">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+<style>
+  :root {
+    --night: #0e1a2b;
+    --night-2: #16263d;
+    --gold: #e8c47a;
+    --gold-soft: #f3dfb3;
+    --red: #9e2a2b;
+    --red-dark: #7a1f21;
+    --green: #234d3c;
+    --cream: #fbf6ec;
+    --text: #f5efe3;
+    --muted: #b9c2cf;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html { background: var(--night); }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, var(--night-2), var(--night) 70%);
+    color: var(--text);
+    font-family: Georgia, "Times New Roman", serif;
+    padding: 0 16px 48px;
+    overflow-x: hidden;
+  }
+  header { text-align: center; max-width: 760px; margin: 0 auto; padding: 48px 0 28px; }
+  h1 { font-weight: normal; font-size: clamp(1.7rem, 5vw, 2.8rem); margin: 0 0 8px; color: var(--gold-soft); }
+  .sub { color: var(--muted); font-size: 1.05rem; margin: 0; letter-spacing: .04em; }
+  .notice {
+    margin: 16px auto 0; max-width: 520px; padding: 12px 18px; border-radius: 10px;
+    border: 1px solid rgba(232,196,122,.5); background: rgba(158,42,43,.35); color: var(--gold-soft);
+  }
+  .status { color: var(--gold); font-size: .95rem; margin-top: 14px; min-height: 1.2em; }
+
+  .grid {
+    max-width: 960px; margin: 0 auto;
+    display: grid; gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+  .door {
+    position: relative; aspect-ratio: 1;
+    border: 0; border-radius: 10px; cursor: pointer;
+    font: inherit; color: var(--gold-soft);
+    background: linear-gradient(145deg, var(--red), var(--red-dark));
+    box-shadow: inset 0 0 0 2px rgba(232,196,122,.35), 0 6px 16px rgba(0,0,0,.35);
+    transition: transform .2s, box-shadow .2s, filter .2s;
+  }
+  .door:nth-child(3n+2) { background: linear-gradient(145deg, var(--green), #173528); }
+  .door:nth-child(5n+4) { background: linear-gradient(145deg, #3a4f6e, #263750); }
+  .door .num { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+  .door:hover:not(.locked), .door:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 2px var(--gold), 0 10px 22px rgba(0,0,0,.45); outline: none; }
+  .door.locked { cursor: not-allowed; filter: saturate(.4) brightness(.7); }
+  .door.locked::after { content: "🔒"; position: absolute; top: 6px; right: 8px; font-size: .75rem; opacity: .8; }
+  /* Opened door looks like an empty dark compartment */
+  .door.opened { background: #06090f; color: var(--gold); box-shadow: inset 0 4px 14px rgba(0,0,0,.9), inset 0 0 0 1px rgba(232,196,122,.35); }
+  .door.opened .num { opacity: .6; }
+  .door.opened::after {
+    content: "✓"; position: absolute; top: 6px; right: 6px;
+    width: 1.5em; height: 1.5em; line-height: 1.5em; border-radius: 50%;
+    background: var(--green); color: var(--cream); font-size: .8rem; font-family: system-ui, sans-serif;
+  }
+  .door.today:not(.opened) { animation: glow 2.4s ease-in-out infinite; }
+  @keyframes glow { 50% { box-shadow: inset 0 0 0 2px var(--gold), 0 0 26px rgba(232,196,122,.55); } }
+
+  footer { text-align: center; max-width: 640px; margin: 44px auto 0; color: var(--muted); line-height: 1.6; }
+  footer .closing { font-style: italic; margin: 0 0 18px; }
+  .footer-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .pill {
+    border: 1px solid rgba(232,196,122,.5); border-radius: 999px; padding: 7px 16px;
+    background: var(--night); color: var(--gold-soft); font: inherit; font-size: .85rem; cursor: pointer;
+  }
+  .signature {
+    margin: 0 0 20px; color: var(--gold);
+    font-family: "Segoe Script", "Brush Script MT", "Snell Roundhand", cursive;
+    font-size: 1.6rem; transform: rotate(-3deg);
+  }
+  .signature a { color: inherit; text-decoration: none; transition: color .2s; }
+  .signature a:hover, .signature a:focus-visible { color: var(--gold-soft); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .pill.reset:hover { border-color: var(--gold); background: #1b2a40; }
+  .pill.reset.confirm { border-color: #e07a7a; color: #ffb4b4; }
+
+  dialog {
+    width: min(92vw, 520px); border: 0; border-radius: 14px; padding: 0;
+    background: var(--cream); color: #2b2420;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  dialog::backdrop { background: rgba(8,14,24,.75); }
+  dialog[open] { animation: pop .35s ease-out; }
+  @keyframes pop { from { transform: scale(.85) rotateX(20deg); opacity: 0; } }
+  .card { padding: 36px 30px 28px; text-align: center; }
+  .card .date { color: var(--red); font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
+  .card h2 { font-weight: normal; margin: 6px 0 18px; color: var(--green); }
+  .card blockquote { margin: 0; font-size: clamp(1.15rem, 4vw, 1.4rem); line-height: 1.5; }
+  .card button {
+    margin-top: 26px; border: 0; border-radius: 999px; padding: 10px 26px; cursor: pointer;
+    font: inherit; background: var(--red); color: var(--cream);
+  }
+  .card button:hover { background: var(--red-dark); }
+
+  /* Phones: 4 columns so all 24 doors fit on roughly one screen */
+  @media (max-width: 600px) {
+    body { padding: 0 12px 28px; }
+    header { padding: 18px 0 14px; }
+    h1 { font-size: 1.35rem; margin-bottom: 4px; }
+    .sub { font-size: .85rem; }
+    .status { font-size: .8rem; margin-top: 8px; }
+    .grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .door { border-radius: 8px; }
+    .door .num { font-size: 1.5rem; }
+    .door.locked::after { top: 3px; right: 4px; font-size: .6rem; }
+    footer { margin-top: 22px; font-size: .85rem; }
+    footer .closing { margin-bottom: 12px; }
+    .signature { font-size: 1.3rem; margin-bottom: 14px; }
+    .pill { padding: 6px 12px; font-size: .78rem; }
+    .door.opened::after { top: 3px; right: 3px; font-size: .6rem; }
+    .card { padding: 26px 20px 22px; }
+  }
+
+  .snow { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+  header, .grid, footer { position: relative; z-index: 1; }
+  /* Soft night-colored backdrop so the snow stays behind all text */
+  header, footer {
+    background: radial-gradient(ellipse farthest-side, var(--night) 72%, transparent);
+    text-shadow: 0 0 3px var(--night), 0 0 6px var(--night), 0 0 10px var(--night), 0 0 14px var(--night);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .snow { display: none; }
+    .door, dialog[open], .door.today:not(.opened) { animation: none; transition: none; }
+  }
+</style>
+</head>
+<body>
+<canvas class="snow" aria-hidden="true"></canvas>
+
+<header>
+  <h1>🎄 Dein emotionaler Adventskalender</h1>
+  <p class="sub">24 Tage, 24 Herzensbotschaften</p>
+  <p class="notice" id="notice" role="status" hidden></p>
+  <p class="status" id="status"></p>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<footer>
+  <p class="closing">Möge dieser Adventskalender jeden Tag ein kleines Licht anzünden – und Menschen daran erinnern, was wirklich zählt. ❤️</p>
+  <p class="signature"><a href="https://github.com/n-brand/portfolio" target="_blank" rel="noopener">Nicolas Brand</a></p>
+  <div class="footer-actions">
+    <button type="button" class="pill reset" id="reset">Fortschritt zurücksetzen</button>
+  </div>
+</footer>
+
+<dialog id="dialog">
+  <div class="card">
+    <p class="date" id="d-date"></p>
+    <h2 id="d-title"></h2>
+    <blockquote id="d-quote"></blockquote>
+    <button type="button" id="d-close">Schließen</button>
+  </div>
+</dialog>
+
+<script>
+  const messages = [
+    ["Hoffnung", "Manchmal beginnt das größte Wunder mit einem kleinen Funken Hoffnung."],
+    ["Zeit", "Das wertvollste Geschenk ist Zeit – denn was vergangen ist, kommt nicht zurück."],
+    ["Liebe", "Ein Mensch, der dein Herz wärmt, ist mehr wert als tausend Geschenke."],
+    ["Frieden", "Vielleicht ist Frieden einfach der Moment, in dem wir aufhören, gegeneinander zu kämpfen."],
+    ["Kleine Gesten", "Ein kleines Zeichen der Liebe kann einen ganzen Tag verändern."],
+    ["Nächstenliebe", "Sei der Grund, warum heute jemand wieder an das Gute glaubt."],
+    ["Erinnerungen", "Manche Menschen sind nicht mehr bei uns, aber Weihnachten trägt sie näher ans Herz."],
+    ["Mut", "Du musst nicht jeden Tag stark sein. Manchmal reicht es, nicht aufzugeben."],
+    ["Geborgenheit", "Zuhause ist dort, wo du nichts beweisen musst, um geliebt zu werden."],
+    ["Hoffnung", "Auch die dunkelste Nacht kann den Weg zu einem neuen Morgen nicht verhindern."],
+    ["Wertschätzung", "Sag den Menschen, was sie dir bedeuten. Warte nicht auf einen besonderen Tag."],
+    ["Stille", "Du darfst langsamer werden. Das Leben ist kein Rennen, das du gewinnen musst."],
+    ["Nähe", "Manchmal sagt eine Umarmung all das, wofür Worte niemals reichen würden."],
+    ["Dankbarkeit", "Wer das Kleine zu schätzen weiß, entdeckt oft das größte Glück."],
+    ["Einsamkeit", "Vergiss heute niemanden. Manchmal wartet jemand nur auf ein kleines Zeichen."],
+    ["Neuanfang", "Du darfst jederzeit neu beginnen. Deine Vergangenheit ist nicht dein ganzes Leben."],
+    ["Mitgefühl", "Sei freundlich. Du kennst nicht alle Kämpfe, die ein Mensch still in sich trägt."],
+    ["Vergänglichkeit", "Nichts ist selbstverständlich. Gerade deshalb ist jeder gemeinsame Moment kostbar."],
+    ["Glaube", "Manchmal genügt ein kleiner Lichtblick, um wieder an Wunder zu glauben."],
+    ["Zusammenhalt", "Eine Familie ist nicht perfekt, wenn alle gleich sind, sondern wenn Liebe Platz für alle hat."],
+    ["Glück", "Vielleicht bist du längst glücklicher, als du manchmal glaubst."],
+    ["Liebe zeigen", "Warte nicht auf Weihnachten, um Liebe zu zeigen. Für jemanden könnte heute der richtige Moment sein."],
+    ["Das Wesentliche", "Am Ende erinnern wir uns nicht an die perfekten Tage, sondern an die Menschen, die sie besonders gemacht haben."],
+    ["Weihnachtswunder", "Wenn heute Liebe in deinem Herzen wohnt, Frieden deine Seele berührt und jemand an dich denkt, dann ist Weihnachten bereits da."]
+  ];
+
+  // Fixed shuffled door order so the calendar looks like a real one
+  const order = [7, 15, 2, 21, 11, 5, 18, 1, 13, 24, 9, 4, 20, 16, 3, 12, 22, 8, 17, 6, 23, 10, 14, 19];
+
+  // ===== Date switch for testing =====
+  // Fixed date like "2026-12-03" to test a day, or null to use the real date.
+  // Set back to null before publishing!
+  const TEST_DATE = "2026-12-03";
+
+  // URL overrides for testing: ?datum=2026-12-03 sets the date, ?vorschau unlocks all doors
+  const params = new URLSearchParams(location.search);
+  const preview = params.has("vorschau");
+  const fixedDate = params.get("datum") || TEST_DATE;
+
+  function currentDate() {
+    if (fixedDate) {
+      const [y, m, d] = fixedDate.split("-").map(Number);
+      if (y && m && d) return new Date(y, m - 1, d);
+    }
+    return new Date();
+  }
+
+  // Phases: "before" (Feb-Nov), "advent" (Dec 1-24), "after" (Dec 25 - Jan 31, all doors open)
+  function getSeason(date) {
+    const month = date.getMonth();
+    const dayOfMonth = date.getDate();
+    if (month === 11 && dayOfMonth <= 24) return { phase: "advent", today: dayOfMonth, date };
+    if (month === 11 || month === 0) return { phase: "after", today: 0, date };
+    return { phase: "before", today: 0, date };
+  }
+
+  let season = getSeason(currentDate());
+
+  function isOpenable(day) {
+    return preview || season.phase === "after" || (season.phase === "advent" && day <= season.today);
+  }
+
+  // Opened doors are kept in a cookie for one year, e.g. "1,2,5"
+  const cookieName = "adventskalender";
+  function loadOpened() {
+    const match = document.cookie.match(new RegExp("(?:^|; )" + cookieName + "=([^;]*)"));
+    if (!match) return new Set();
+    return new Set(match[1].split(",").map(Number).filter(n => n >= 1 && n <= 24));
+  }
+  function saveOpened(set) {
+    document.cookie = `${cookieName}=${[...set].join(",")}; max-age=31536000; path=/; SameSite=Lax`;
+  }
+  function clearOpened() {
+    document.cookie = `${cookieName}=; max-age=0; path=/; SameSite=Lax`;
+  }
+  const opened = loadOpened();
+
+  const grid = document.getElementById("grid");
+  const dialog = document.getElementById("dialog");
+
+  for (const day of order) {
+    const door = document.createElement("button");
+    door.type = "button";
+    door.className = "door";
+    door.dataset.day = day;
+    door.innerHTML = `<span class="num">${day}</span>`;
+    door.addEventListener("click", () => openDoor(door, day));
+    grid.appendChild(door);
+  }
+
+  // Applies the current date to all doors, the status line and the notice
+  function render() {
+    for (const door of grid.querySelectorAll(".door")) {
+      const day = Number(door.dataset.day);
+      const openable = isOpenable(day);
+      door.classList.toggle("locked", !openable);
+      door.classList.toggle("today", !preview && day === season.today);
+      if (openable && opened.has(day)) {
+        markOpened(door, day);
+      } else {
+        door.classList.remove("opened");
+        door.setAttribute("aria-label", openable ? `Türchen ${day} öffnen` : `Türchen ${day}, öffnet am ${day}. Dezember`);
+      }
+    }
+
+    const notice = document.getElementById("notice");
+    notice.hidden = preview || season.phase !== "before";
+    if (!notice.hidden) {
+      const start = new Date(season.date.getFullYear(), 11, 1);
+      const days = Math.round((start - new Date(season.date.getFullYear(), season.date.getMonth(), season.date.getDate())) / 86400000);
+      notice.textContent = `Die Adventszeit hat noch nicht begonnen. Das erste Türchen öffnet sich am 1. Dezember – noch ${days} ${days === 1 ? "Tag" : "Tage"}.`;
+    }
+
+    const testHint = fixedDate ? ` (Testdatum ${season.date.toLocaleDateString("de-DE")})` : "";
+    if (preview) {
+      setStatus("Vorschau: alle Türchen sind offen." + testHint);
+    } else if (season.phase === "advent") {
+      setStatus(`Heute ist der ${season.today}. Dezember – dein Türchen wartet.` + testHint);
+    } else if (season.phase === "after") {
+      setStatus("Die Adventszeit ist vorbei – alle Türchen sind offen." + testHint);
+    } else {
+      setStatus(testHint.trim());
+    }
+  }
+
+  // Re-check the date every minute and when the tab becomes visible again,
+  // so the next door unlocks at midnight without a reload
+  let lastDateKey = season.date.toDateString();
+  function checkDate() {
+    const now = currentDate();
+    if (now.toDateString() === lastDateKey) return;
+    lastDateKey = now.toDateString();
+    season = getSeason(now);
+    render();
+  }
+  setInterval(checkDate, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) checkDate(); });
+
+  function markOpened(door, day) {
+    door.classList.add("opened");
+    door.setAttribute("aria-label", `Türchen ${day}, schon geöffnet: ${messages[day - 1][0]}`);
+  }
+
+  function unmarkOpened(door, day) {
+    door.classList.remove("opened");
+    door.setAttribute("aria-label", `Türchen ${day} öffnen`);
+  }
+
+  // Two-step reset so a single tap cannot wipe the progress
+  const resetButton = document.getElementById("reset");
+  let resetTimer;
+  resetButton.addEventListener("click", () => {
+    if (!resetButton.classList.contains("confirm")) {
+      resetButton.classList.add("confirm");
+      resetButton.textContent = "Wirklich zurücksetzen?";
+      resetTimer = setTimeout(restoreResetButton, 4000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    clearOpened();
+    opened.clear();
+    for (const door of grid.querySelectorAll(".door.opened")) unmarkOpened(door, Number(door.dataset.day));
+    restoreResetButton();
+    setStatus("Fortschritt zurückgesetzt.");
+  });
+  function restoreResetButton() {
+    resetButton.classList.remove("confirm");
+    resetButton.textContent = "Fortschritt zurücksetzen";
+  }
+
+  function openDoor(door, day) {
+    if (!isOpenable(day)) {
+      // Before Advent the notice above already explains it
+      if (season.phase !== "before") setStatus(`Geduld – Türchen ${day} öffnet sich am ${day}. Dezember.`);
+      return;
+    }
+    const [title, quote] = messages[day - 1];
+    document.getElementById("d-date").textContent = `${day}. Dezember`;
+    document.getElementById("d-title").textContent = title;
+    document.getElementById("d-quote").textContent = `„${quote}“`;
+    dialog.showModal();
+    opened.add(day);
+    saveOpened(opened);
+    markOpened(door, day);
+  }
+
+  document.getElementById("d-close").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
+
+  function setStatus(text) { document.getElementById("status").textContent = text; }
+
+  render();
+
+  // Gentle snowfall
+  const canvas = document.querySelector(".snow");
+  const ctx = canvas.getContext("2d");
+  let flakes = [];
+  function resize() {
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+    flakes = Array.from({ length: Math.round(innerWidth / 12) }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 2 + .6,
+      s: Math.random() * .6 + .25,
+      d: Math.random() * Math.PI * 2
+    }));
+  }
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(255,255,255,.75)";
+    for (const f of flakes) {
+      f.y += f.s;
+      f.d += .01;
+      f.x += Math.sin(f.d) * .3;
+      if (f.y > canvas.height) { f.y = -4; f.x = Math.random() * canvas.width; }
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(tick);
+  }
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    resize();
+    addEventListener("resize", resize);
+    tick();
+  }
+</script>
+</body>
+</html>
