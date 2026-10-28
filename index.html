@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dein emotionaler Adventskalender</title>
 <meta name="description" content="24 Tage, 24 Herzensbotschaften">
+<meta name="theme-color" content="#0e1a2b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Adventskalender">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
 <style>
   :root {
@@ -44,30 +49,43 @@
     display: grid; gap: 14px;
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   }
+  /* The door itself is the dark compartment; the colored .leaf on top swings open */
   .door {
-    position: relative; aspect-ratio: 1;
+    position: relative; aspect-ratio: 1; padding: 0;
     border: 0; border-radius: 10px; cursor: pointer;
-    font: inherit; color: var(--gold-soft);
-    background: linear-gradient(145deg, var(--red), var(--red-dark));
-    box-shadow: inset 0 0 0 2px rgba(232,196,122,.35), 0 6px 16px rgba(0,0,0,.35);
-    transition: transform .2s, box-shadow .2s, filter .2s;
+    font: inherit; color: var(--gold);
+    background: #06090f;
+    box-shadow: inset 0 4px 14px rgba(0,0,0,.9), inset 0 0 0 1px rgba(232,196,122,.35), 0 6px 16px rgba(0,0,0,.35);
+    perspective: 700px;
+    transition: transform .2s;
   }
-  .door:nth-child(3n+2) { background: linear-gradient(145deg, var(--green), #173528); }
-  .door:nth-child(5n+4) { background: linear-gradient(145deg, #3a4f6e, #263750); }
+  .door > .num { opacity: .6; }
+  .door .leaf {
+    position: absolute; inset: 0; border-radius: inherit;
+    display: grid; place-items: center; color: var(--gold-soft);
+    background: linear-gradient(145deg, var(--red), var(--red-dark));
+    box-shadow: inset 0 0 0 2px rgba(232,196,122,.35);
+    transform-origin: left center; backface-visibility: hidden;
+    transition: box-shadow .2s;
+  }
+  .door:nth-child(3n+2) .leaf { background: linear-gradient(145deg, var(--green), #173528); }
+  .door:nth-child(5n+4) .leaf { background: linear-gradient(145deg, #3a4f6e, #263750); }
   .door .num { font-size: clamp(1.8rem, 6vw, 2.6rem); }
-  .door:hover:not(.locked), .door:focus-visible { transform: translateY(-3px); box-shadow: inset 0 0 0 2px var(--gold), 0 10px 22px rgba(0,0,0,.45); outline: none; }
-  .door.locked { cursor: not-allowed; filter: saturate(.4) brightness(.7); }
-  .door.locked::after { content: "🔒"; position: absolute; top: 6px; right: 8px; font-size: .75rem; opacity: .8; }
-  /* Opened door looks like an empty dark compartment */
-  .door.opened { background: #06090f; color: var(--gold); box-shadow: inset 0 4px 14px rgba(0,0,0,.9), inset 0 0 0 1px rgba(232,196,122,.35); }
-  .door.opened .num { opacity: .6; }
+  .door:hover, .door:focus-visible { transform: translateY(-3px); outline: none; }
+  .door:hover .leaf, .door:focus-visible .leaf { box-shadow: inset 0 0 0 2px var(--gold), 0 10px 22px rgba(0,0,0,.45); }
+  /* Locked doors look like all others; they only shake when tapped */
+  .door.shake { animation: shake .4s ease-in-out; }
+  @keyframes shake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+  /* Opened: the leaf is swung away, the compartment with its number stays */
+  .door.opened .leaf { transform: rotateY(-110deg); pointer-events: none; }
+  .door.animating { z-index: 2; }
+  .door.animating::after { opacity: 0; }
+  .door.animating .leaf { transition: transform .65s cubic-bezier(.35,.6,.3,1); }
   .door.opened::after {
     content: "✓"; position: absolute; top: 6px; right: 6px;
     width: 1.5em; height: 1.5em; line-height: 1.5em; border-radius: 50%;
     background: var(--green); color: var(--cream); font-size: .8rem; font-family: system-ui, sans-serif;
   }
-  .door.today:not(.opened) { animation: glow 2.4s ease-in-out infinite; }
-  @keyframes glow { 50% { box-shadow: inset 0 0 0 2px var(--gold), 0 0 26px rgba(232,196,122,.55); } }
 
   footer { text-align: center; max-width: 640px; margin: 44px auto 0; color: var(--muted); line-height: 1.6; }
   footer .closing { font-style: italic; margin: 0 0 18px; }
@@ -83,6 +101,25 @@
   }
   .signature a { color: inherit; text-decoration: none; transition: color .2s; }
   .signature a:hover, .signature a:focus-visible { color: var(--gold-soft); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1px; }
+  .admin-code {
+    display: block; margin: 16px auto 0; width: 9em; padding: 4px 10px; text-align: center;
+    border: 1px solid rgba(185,194,207,.18); border-radius: 999px;
+    background: var(--night); color: var(--muted); font: inherit; font-size: .75rem;
+  }
+  .admin-code:focus { outline: none; border-color: rgba(232,196,122,.5); }
+  .admin-panel {
+    margin: 18px auto 0; max-width: 340px; padding: 14px 16px; border-radius: 10px;
+    border: 1px dashed rgba(232,196,122,.6); background: var(--night-2);
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+  }
+  .admin-code[hidden], .admin-panel[hidden] { display: none; }
+  .admin-title { margin: 0; color: var(--gold); font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; }
+  .admin-date { color: var(--gold-soft); font-size: .9rem; }
+  .admin-date input {
+    margin-left: 6px; padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(232,196,122,.5);
+    background: var(--night); color: var(--gold-soft); font: inherit; color-scheme: dark;
+  }
+  .install-hint { margin: 10px auto 0; max-width: 320px; font-size: .8rem; color: var(--gold-soft); }
   .pill.reset:hover { border-color: var(--gold); background: #1b2a40; }
   .pill.reset.confirm { border-color: #e07a7a; color: #ffb4b4; }
 
@@ -98,11 +135,38 @@
   .card .date { color: var(--red); font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; margin: 0; }
   .card h2 { font-weight: normal; margin: 6px 0 18px; color: var(--green); }
   .card blockquote { margin: 0; font-size: clamp(1.15rem, 4vw, 1.4rem); line-height: 1.5; }
+  .card-actions { margin-top: 26px; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
   .card button {
-    margin-top: 26px; border: 0; border-radius: 999px; padding: 10px 26px; cursor: pointer;
+    border: 0; border-radius: 999px; padding: 10px 26px; cursor: pointer;
     font: inherit; background: var(--red); color: var(--cream);
   }
   .card button:hover { background: var(--red-dark); }
+  .card button.secondary { background: transparent; color: var(--green); box-shadow: inset 0 0 0 1.5px var(--green); }
+  .card button.secondary:hover { background: rgba(35,77,60,.1); }
+
+  #review-open { margin-top: 12px; }
+  #review-open[hidden] { display: none; }
+  dialog.review { width: min(94vw, 640px); max-height: 88vh; }
+  .review .card { text-align: left; }
+  .review h2 { text-align: center; margin-top: 0; outline: none; }
+  .review ol { list-style: none; margin: 0; padding: 0; }
+  .review li { padding: 12px 0; border-top: 1px solid rgba(43,36,32,.12); }
+  .review li:first-child { border-top: 0; }
+  .review .r-head { color: var(--red); font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; }
+  .review .r-quote { margin-top: 4px; line-height: 1.45; }
+  .review .card-actions { justify-content: center; }
+
+  /* Experiment: doors in different sizes (?groessen or admin checkbox) */
+  .grid.sizes {
+    --cols: 6; --gap: 14px;
+    gap: var(--gap); grid-template-columns: repeat(var(--cols), 1fr); grid-auto-flow: dense;
+    grid-auto-rows: calc((min(960px, 100vw - 32px) - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  }
+  .grid.sizes .door { aspect-ratio: auto; }
+  .grid.sizes .size-big { grid-column: span 2; grid-row: span 2; }
+  .grid.sizes .size-wide { grid-column: span 2; }
+  .grid.sizes .size-tall { grid-row: span 2; }
+  .grid.sizes .size-big .num { font-size: clamp(2.6rem, 10vw, 4rem); }
 
   /* Phones: 4 columns so all 24 doors fit on roughly one screen */
   @media (max-width: 600px) {
@@ -114,7 +178,8 @@
     .grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .door { border-radius: 8px; }
     .door .num { font-size: 1.5rem; }
-    .door.locked::after { top: 3px; right: 4px; font-size: .6rem; }
+    .grid.sizes { --cols: 4; --gap: 8px; grid-auto-rows: calc((100vw - 24px - 3 * 8px) / 4); }
+    .grid.sizes .size-big .num { font-size: 2.6rem; }
     footer { margin-top: 22px; font-size: .85rem; }
     footer .closing { margin-bottom: 12px; }
     .signature { font-size: 1.3rem; margin-bottom: 14px; }
@@ -132,7 +197,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .snow { display: none; }
-    .door, dialog[open], .door.today:not(.opened) { animation: none; transition: none; }
+    .door, .door.shake, .door.animating .leaf, dialog[open] { animation: none; transition: none; }
   }
 </style>
 </head>
@@ -144,6 +209,7 @@
   <p class="sub">24 Tage, 24 Herzensbotschaften</p>
   <p class="notice" id="notice" role="status" hidden></p>
   <p class="status" id="status"></p>
+  <button type="button" class="pill" id="review-open" hidden>Alle 24 Botschaften</button>
 </header>
 
 <main class="grid" id="grid"></main>
@@ -152,16 +218,39 @@
   <p class="closing">Möge dieser Adventskalender jeden Tag ein kleines Licht anzünden – und Menschen daran erinnern, was wirklich zählt. ❤️</p>
   <p class="signature"><a href="https://github.com/n-brand/portfolio" target="_blank" rel="noopener">Nicolas Brand</a></p>
   <div class="footer-actions">
+    <button type="button" class="pill" id="install" hidden>Als App installieren</button>
     <button type="button" class="pill reset" id="reset">Fortschritt zurücksetzen</button>
   </div>
+  <p class="install-hint" id="install-hint" hidden>Auf dem iPhone: unten auf „Teilen“ tippen und „Zum Home-Bildschirm“ wählen.</p>
+  <input type="text" id="admin-code" class="admin-code" aria-label="Code" autocomplete="off" spellcheck="false" enterkeyhint="go">
+  <div class="admin-panel" id="admin-panel" hidden>
+    <p class="admin-title">Admin-Modus</p>
+    <label class="admin-date">Datum <input type="date" id="admin-date"></label>
+    <label class="admin-date"><input type="checkbox" id="admin-sizes"> Verschiedene Größen</label>
+    <button type="button" class="pill" id="admin-reset">Admin-Fortschritt zurücksetzen</button>
+    <button type="button" class="pill" id="admin-exit">Admin-Modus verlassen</button>
+  </div>
 </footer>
+
+<dialog id="review" class="review">
+  <div class="card">
+    <h2 tabindex="-1" autofocus>Alle 24 Botschaften</h2>
+    <ol id="review-list"></ol>
+    <div class="card-actions">
+      <button type="button" id="review-close">Schließen</button>
+    </div>
+  </div>
+</dialog>
 
 <dialog id="dialog">
   <div class="card">
     <p class="date" id="d-date"></p>
     <h2 id="d-title"></h2>
     <blockquote id="d-quote"></blockquote>
-    <button type="button" id="d-close">Schließen</button>
+    <div class="card-actions">
+      <button type="button" class="secondary" id="d-share">Teilen</button>
+      <button type="button" id="d-close">Schließen</button>
+    </div>
   </div>
 </dialog>
 
@@ -199,16 +288,20 @@
   // ===== Date switch for testing =====
   // Fixed date like "2026-12-03" to test a day, or null to use the real date.
   // Set back to null before publishing!
-  const TEST_DATE = "2026-12-03";
+  const TEST_DATE = null;
 
   // URL overrides for testing: ?datum=2026-12-03 sets the date, ?vorschau unlocks all doors
   const params = new URLSearchParams(location.search);
   const preview = params.has("vorschau");
   const fixedDate = params.get("datum") || TEST_DATE;
 
+  // Date chosen in admin mode ("YYYY-MM-DD"), wins over TEST_DATE and ?datum
+  let adminDate = null;
+
   function currentDate() {
-    if (fixedDate) {
-      const [y, m, d] = fixedDate.split("-").map(Number);
+    const override = adminDate || fixedDate;
+    if (override) {
+      const [y, m, d] = override.split("-").map(Number);
       if (y && m && d) return new Date(y, m - 1, d);
     }
     return new Date();
@@ -242,17 +335,32 @@
   function clearOpened() {
     document.cookie = `${cookieName}=; max-age=0; path=/; SameSite=Lax`;
   }
-  const opened = loadOpened();
+  // Admin mode, ?vorschau and fixed test dates are test runs: they start with
+  // all doors untouched and never write the cookie
+  let adminActive = false;
+  function usesCookie() {
+    return !adminActive && !preview && !fixedDate;
+  }
+  let opened = usesCookie() ? loadOpened() : new Set();
 
   const grid = document.getElementById("grid");
   const dialog = document.getElementById("dialog");
 
+  // Size experiment: 2 big (2x2), 3 wide (2x1), 3 tall (1x2) = 36 cells,
+  // fills 6 columns (desktop) and 4 columns (phone) without gaps
+  const sizes = { 24: "big", 6: "big", 1: "wide", 13: "wide", 20: "wide", 9: "tall", 15: "tall", 19: "tall" };
+  function setSizes(on) {
+    grid.classList.toggle("sizes", on);
+    document.getElementById("admin-sizes").checked = on;
+  }
+
   for (const day of order) {
     const door = document.createElement("button");
     door.type = "button";
-    door.className = "door";
+    door.className = "door" + (sizes[day] ? ` size-${sizes[day]}` : "");
     door.dataset.day = day;
-    door.innerHTML = `<span class="num">${day}</span>`;
+    // Number inside the compartment, plus the colored front leaf that swings open
+    door.innerHTML = `<span class="num">${day}</span><span class="leaf" aria-hidden="true"><span class="num">${day}</span></span>`;
     door.addEventListener("click", () => openDoor(door, day));
     grid.appendChild(door);
   }
@@ -263,7 +371,6 @@
       const day = Number(door.dataset.day);
       const openable = isOpenable(day);
       door.classList.toggle("locked", !openable);
-      door.classList.toggle("today", !preview && day === season.today);
       if (openable && opened.has(day)) {
         markOpened(door, day);
       } else {
@@ -280,7 +387,12 @@
       notice.textContent = `Die Adventszeit hat noch nicht begonnen. Das erste Türchen öffnet sich am 1. Dezember – noch ${days} ${days === 1 ? "Tag" : "Tage"}.`;
     }
 
-    const testHint = fixedDate ? ` (Testdatum ${season.date.toLocaleDateString("de-DE")})` : "";
+    // Review of all messages once Advent is over (or in preview)
+    document.getElementById("review-open").hidden = !(preview || season.phase === "after");
+
+    const testHint = adminDate || fixedDate
+      ? ` (${adminDate ? "Admin-Datum" : "Testdatum"} ${season.date.toLocaleDateString("de-DE")})`
+      : "";
     if (preview) {
       setStatus("Vorschau: alle Türchen sind offen." + testHint);
     } else if (season.phase === "advent") {
@@ -326,12 +438,16 @@
       return;
     }
     clearTimeout(resetTimer);
+    // Always clears the real progress; the admin test run has its own button
     clearOpened();
-    opened.clear();
-    for (const door of grid.querySelectorAll(".door.opened")) unmarkOpened(door, Number(door.dataset.day));
+    if (!adminActive) clearShownProgress();
     restoreResetButton();
     setStatus("Fortschritt zurückgesetzt.");
   });
+  function clearShownProgress() {
+    opened.clear();
+    for (const door of grid.querySelectorAll(".door.opened")) unmarkOpened(door, Number(door.dataset.day));
+  }
   function restoreResetButton() {
     resetButton.classList.remove("confirm");
     resetButton.textContent = "Fortschritt zurücksetzen";
@@ -339,24 +455,162 @@
 
   function openDoor(door, day) {
     if (!isOpenable(day)) {
+      door.classList.remove("shake");
+      void door.offsetWidth; // restart the animation on repeated taps
+      door.classList.add("shake");
       // Before Advent the notice above already explains it
       if (season.phase !== "before") setStatus(`Geduld – Türchen ${day} öffnet sich am ${day}. Dezember.`);
       return;
     }
+    if (door.classList.contains("animating")) return;
+    const alreadyOpen = door.classList.contains("opened");
+    opened.add(day);
+    if (usesCookie()) saveOpened(opened);
+    if (alreadyOpen) {
+      showMessage(day);
+      return;
+    }
+    // Swing the leaf open first, then show the message
+    door.classList.add("animating");
+    markOpened(door, day);
+    const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 650;
+    setTimeout(() => {
+      door.classList.remove("animating");
+      showMessage(day);
+    }, delay);
+  }
+
+  let currentDay = null;
+  function showMessage(day) {
+    currentDay = day;
     const [title, quote] = messages[day - 1];
     document.getElementById("d-date").textContent = `${day}. Dezember`;
     document.getElementById("d-title").textContent = title;
     document.getElementById("d-quote").textContent = `„${quote}“`;
+    shareButton.textContent = "Teilen";
     dialog.showModal();
-    opened.add(day);
-    saveOpened(opened);
-    markOpened(door, day);
   }
+
+  // Share via the system share sheet (phones, Edge/Chrome on Windows), else copy to clipboard
+  const shareButton = document.getElementById("d-share");
+  shareButton.addEventListener("click", async () => {
+    const [title, quote] = messages[currentDay - 1];
+    const url = location.origin + location.pathname;
+    const text = `„${quote}“\n– Türchen ${currentDay}: ${title}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: "Dein emotionaler Adventskalender", text, url }); } catch {}
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`${text}\n\n${url}`);
+      shareButton.textContent = "Kopiert ✓";
+    } catch {
+      shareButton.textContent = "Kopieren nicht möglich";
+    }
+  });
 
   document.getElementById("d-close").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", e => { if (e.target === dialog) dialog.close(); });
 
   function setStatus(text) { document.getElementById("status").textContent = text; }
+
+  // ===== Admin mode =====
+  // Typing the code into the small footer field unlocks a date picker.
+  // Not a security feature: the code is visible in the page source.
+  const ADMIN_CODE = "nicolas";
+  const adminCode = document.getElementById("admin-code");
+  const adminPanel = document.getElementById("admin-panel");
+  const adminDateInput = document.getElementById("admin-date");
+
+  function toIsoDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function applyDate() {
+    season = getSeason(currentDate());
+    lastDateKey = season.date.toDateString();
+    render();
+  }
+
+  // Code is confirmed with Enter; a wrong code just clears the field
+  adminCode.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    const correct = adminCode.value.trim().toLowerCase() === ADMIN_CODE;
+    adminCode.value = "";
+    if (!correct) return;
+    adminCode.hidden = true;
+    adminPanel.hidden = false;
+    // Fresh test run, all doors untouched; date starts in December
+    // (today if it is December, otherwise December 1 of this year)
+    adminActive = true;
+    const now = currentDate();
+    adminDate = toIsoDate(now.getMonth() === 11 ? now : new Date(now.getFullYear(), 11, 1));
+    adminDateInput.value = adminDate;
+    opened = new Set();
+    applyDate();
+    adminDateInput.focus();
+  });
+
+  adminDateInput.addEventListener("change", () => {
+    if (!adminDateInput.value) return;
+    adminDate = adminDateInput.value;
+    applyDate();
+  });
+
+  const review = document.getElementById("review");
+  document.getElementById("review-list").innerHTML = messages.map(([title, quote], i) =>
+    `<li><div class="r-head">${i + 1}. Dezember · ${title}</div><div class="r-quote">„${quote}“</div></li>`).join("");
+  document.getElementById("review-open").addEventListener("click", () => review.showModal());
+  document.getElementById("review-close").addEventListener("click", () => review.close());
+  review.addEventListener("click", e => { if (e.target === review) review.close(); });
+
+  document.getElementById("admin-sizes").addEventListener("change", e => setSizes(e.target.checked));
+  setSizes(params.has("groessen"));
+
+  // Clears only the test run; the cookie stays untouched
+  document.getElementById("admin-reset").addEventListener("click", () => {
+    clearShownProgress();
+    setStatus("Admin-Fortschritt zurückgesetzt.");
+  });
+
+  document.getElementById("admin-exit").addEventListener("click", () => {
+    adminDate = null;
+    adminActive = false;
+    adminPanel.hidden = true;
+    adminCode.hidden = false;
+    // Back to the real progress from the cookie
+    opened = usesCookie() ? loadOpened() : new Set();
+    applyDate();
+  });
+
+  // ===== Install as app (PWA) =====
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+  const installButton = document.getElementById("install");
+  const installHint = document.getElementById("install-hint");
+  const isStandalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  // iOS has no install prompt; there the button explains the manual way
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  let installPrompt = null;
+
+  addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    installPrompt = e;
+    installButton.hidden = isStandalone;
+  });
+  if (isIos && !isStandalone) installButton.hidden = false;
+
+  installButton.addEventListener("click", async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const { outcome } = await installPrompt.userChoice;
+      installPrompt = null;
+      if (outcome === "accepted") installButton.hidden = true;
+    } else if (isIos) {
+      installHint.hidden = !installHint.hidden;
+    }
+  });
+  addEventListener("appinstalled", () => { installButton.hidden = true; });
 
   render();
 
